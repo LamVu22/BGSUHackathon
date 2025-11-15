@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import GraphPreview from "../components/GraphPreview";
 import SearchResultCard from "../components/SearchResultCard";
 
@@ -43,7 +43,12 @@ export default function Home({ theme, toggleTheme }) {
   const [query, setQuery] = useState("best scholarships for cs majors");
   const [results, setResults] = useState(mockResults);
   const [loading, setLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const isDarkMode = theme === "falconDark";
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleSearch = async (event) => {
     event.preventDefault();
@@ -73,7 +78,7 @@ export default function Home({ theme, toggleTheme }) {
                 onClick={toggleTheme}
                 aria-label="Toggle dark mode"
               >
-                {isDarkMode ? "☀️ Light" : "🌙 Dark"}
+                {mounted ? (isDarkMode ? "☀️ Light" : "🌙 Dark") : "🌙 Dark"}
               </button>
             </div>
             <h1 className="text-4xl lg:text-5xl font-black leading-tight tracking-tight">
