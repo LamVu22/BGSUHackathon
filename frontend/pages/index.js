@@ -26,6 +26,11 @@ const domainFromUrl = (url = "") => {
   }
 };
 
+const SEARCH_MODES = [
+  { value: "web", label: "Web search" },
+  { value: "local", label: "Local search" },
+];
+
 export default function Home({ theme, toggleTheme }) {
   const [query, setQuery] = useState("best scholarships for cs majors");
   const [results, setResults] = useState([]);
@@ -41,6 +46,7 @@ export default function Home({ theme, toggleTheme }) {
   const [errorMessage, setErrorMessage] = useState("");
   const [history, setHistory] = useState([]);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [searchMode, setSearchMode] = useState(SEARCH_MODES[0].value);
   const isDarkMode = theme === "falconDark";
 
   useEffect(() => {
@@ -98,6 +104,10 @@ export default function Home({ theme, toggleTheme }) {
     event.preventDefault();
     const trimmedQuery = query.trim();
     if (!trimmedQuery) return;
+    if (searchMode === "local") {
+      setErrorMessage("Local search is not available yet. Please switch to Web search.");
+      return;
+    }
     const timestamp = new Date();
     setHistory((prev) => [
       {
@@ -230,29 +240,42 @@ export default function Home({ theme, toggleTheme }) {
               <div className="relative">
                 <input
                   type="text"
-                  className="input input-lg input-bordered w-full pr-16"
+                  className="input input-lg input-bordered w-full pr-40"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Where do I find meal plan options?"
                 />
-                <button
-                  type="submit"
-                  className="btn btn-circle btn-primary btn-sm absolute top-1/2 -translate-y-1/2 right-2 shadow-md"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <span className="loading loading-spinner loading-xs text-base-100" />
-                  ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="w-4 h-4 stroke-current">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M5 12h14M12 5l7 7-7 7"
-                      />
-                    </svg>
-                  )}
-                </button>
+                <div className="absolute top-1/2 -translate-y-1/2 right-2 flex items-center gap-2">
+                  <select
+                    value={searchMode}
+                    onChange={(e) => setSearchMode(e.target.value)}
+                    className="select select-xs select-bordered"
+                  >
+                    {SEARCH_MODES.map((mode) => (
+                      <option key={mode.value} value={mode.value}>
+                        {mode.label}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="submit"
+                    className="btn btn-circle btn-primary btn-sm shadow-md"
+                    disabled={loading || searchMode === "local"}
+                  >
+                    {loading ? (
+                      <span className="loading loading-spinner loading-xs text-base-100" />
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="w-4 h-4 stroke-current">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M5 12h14M12 5l7 7-7 7"
+                        />
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </form>
