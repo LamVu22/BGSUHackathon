@@ -16,6 +16,12 @@ const edges = [
   [5, 1],
 ];
 
+const levelStyles = {
+  1: { base: "#f26522", light: "#ffe0cd" },
+  2: { base: "#fbbf24", light: "#fff5d1" },
+  3: { base: "#3aafa9", light: "#d7f7f5" },
+};
+
 export default function GraphPreview({ theme = "falcon" }) {
   const [expanded, setExpanded] = useState(false);
   const isDark = theme === "falconDark";
@@ -55,8 +61,19 @@ export default function GraphPreview({ theme = "falcon" }) {
                   <stop offset="0%" stopColor="rgba(242,101,34,0.7)" />
                   <stop offset="100%" stopColor="rgba(242,101,34,0)" />
                 </radialGradient>
+                {nodes.map((node) => {
+                  const style = levelStyles[node.level] || levelStyles[1];
+                  return (
+                    <radialGradient id={`nodeSphereExpanded-${node.id}`} key={`modal-gradient-${node.id}`} cx="25%" cy="25%" r="75%">
+                      <stop offset="0%" stopColor={style.light} />
+                      <stop offset="45%" stopColor={style.base} />
+                      <stop offset="100%" stopColor={isDark ? "#0f172a" : "#1f2937"} stopOpacity="0.25" />
+                    </radialGradient>
+                  );
+                })}
               </defs>
               <rect x="0" y="0" width="600" height="360" rx="24" fill="url(#nodeGlowExpanded)" opacity={nodeGlowOpacity} />
+              <ellipse cx="300" cy="240" rx="220" ry="90" fill={isDark ? "rgba(15,23,42,0.85)" : "rgba(148,163,184,0.35)"} />
               {edges.map(([from, to], index) => {
                 const source = nodes.find((n) => n.id === from);
                 const target = nodes.find((n) => n.id === to);
@@ -79,14 +96,24 @@ export default function GraphPreview({ theme = "falcon" }) {
               })}
               {nodes.map((node) => (
                 <g key={`modal-${node.id}`}>
+                  <ellipse
+                    cx={node.x * 2}
+                    cy={node.y * 1.5 + 22}
+                    rx="26"
+                    ry="10"
+                    fill={isDark ? "rgba(0,0,0,0.4)" : "rgba(31,41,55,0.18)"}
+                  />
                   <circle
                     cx={node.x * 2}
                     cy={node.y * 1.5}
-                    r="20"
-                    fill={node.level === 1 ? "#f26522" : node.level === 3 ? "#3aafa9" : "#fbbf24"}
-                    className="drop-shadow-lg"
+                    r="22"
+                    fill={`url(#nodeSphereExpanded-${node.id})`}
+                    stroke="rgba(255,255,255,0.4)"
+                    strokeWidth="1.5"
+                    className="drop-shadow-xl"
                   />
-                  <text x={node.x * 2} y={node.y * 1.5 + 32} textAnchor="middle" className="text-sm fill-current">
+                  <circle cx={node.x * 2 - 7} cy={node.y * 1.5 - 7} r="5" fill="rgba(255,255,255,0.6)" />
+                  <text x={node.x * 2} y={node.y * 1.5 + 36} textAnchor="middle" className="text-sm fill-current">
                     {node.label}
                   </text>
                 </g>
@@ -115,8 +142,19 @@ export default function GraphPreview({ theme = "falcon" }) {
             <stop offset="0%" stopColor="rgba(242,101,34,0.7)" />
             <stop offset="100%" stopColor="rgba(242,101,34,0)" />
           </radialGradient>
+          {nodes.map((node) => {
+            const style = levelStyles[node.level] || levelStyles[1];
+            return (
+              <radialGradient id={`nodeSphere-${node.id}`} key={node.id} cx="30%" cy="30%" r="70%">
+                <stop offset="0%" stopColor={style.light} />
+                <stop offset="45%" stopColor={style.base} />
+                <stop offset="100%" stopColor={isDark ? "#0f172a" : "#1f2937"} stopOpacity="0.2" />
+              </radialGradient>
+            );
+          })}
         </defs>
         <rect x="0" y="0" width="300" height="220" rx="16" fill="url(#nodeGlow)" opacity={nodeGlowOpacity} />
+        <ellipse cx="150" cy="150" rx="110" ry="60" fill={isDark ? "rgba(15,23,42,0.8)" : "rgba(148,163,184,0.25)"} />
         {edges.map(([from, to], index) => {
           const source = nodes.find((n) => n.id === from);
           const target = nodes.find((n) => n.id === to);
@@ -154,14 +192,23 @@ export default function GraphPreview({ theme = "falcon" }) {
         })}
         {nodes.map((node) => (
           <g key={node.id}>
+            <ellipse
+              cx={node.x}
+              cy={node.y + 15}
+              rx="16"
+              ry="6"
+              fill={isDark ? "rgba(0,0,0,0.35)" : "rgba(31,41,55,0.15)"}
+            />
             <circle
               cx={node.x}
               cy={node.y}
-              r="14"
-              fill={node.level === 1 ? "#f26522" : node.level === 3 ? "#3aafa9" : "#fbbf24"}
-              className="drop-shadow-md"
+              r="16"
+              fill={`url(#nodeSphere-${node.id})`}
+              stroke="rgba(255,255,255,0.3)"
+              strokeWidth="1"
             />
-            <text x={node.x} y={node.y + 30} textAnchor="middle" className="text-[10px] fill-current">
+            <circle cx={node.x - 5} cy={node.y - 5} r="4" fill="rgba(255,255,255,0.5)" />
+            <text x={node.x} y={node.y + 32} textAnchor="middle" className="text-[10px] fill-current">
               {node.label}
             </text>
           </g>
