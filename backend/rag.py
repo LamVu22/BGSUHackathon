@@ -213,11 +213,13 @@ class RAGPipeline:
             }
             for chunk, score in zip(ranked_chunks, scores)
         ]
+        graph_context = self._build_graph_context(ranked_chunks)
         return {
             "answer": response_text,
             "citations": citations,
             "chunks": [chunk.__dict__ for chunk in ranked_chunks],
             "search_results": [result.__dict__ for result in search_results],
+            "graph_context": graph_context,
             "stats": {
                 "sources": len(pages),
                 "chunks": len(ranked_chunks),
@@ -332,3 +334,21 @@ class RAGPipeline:
         text = re.sub(r"[ \t]+", " ", text)
         text = re.sub(r"\n{3,}", "\n\n", text)
         return text.strip()
+
+    @staticmethod
+    def _build_graph_context(chunks: Sequence[DocumentChunk]) -> Dict[str, Any]:
+        nodes = []
+        edges = []
+        for chunk in chunks:
+            nodes.append(
+                {
+                    "id": chunk.id,
+                    "label": chunk.title or chunk.domain or "Source",
+                    "domain": chunk.domain,
+                    "url": chunk.url,
+                    "score": round(chunk.score, 3),
+                }
+            )
+        for idx in range(len(chunks) - 1):
+            edges.append({"source": chunks[idx].id, "target": chunks[idx + 1].id})
+        return {"nodes": nodes, "edges": edges}
