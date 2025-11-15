@@ -159,6 +159,28 @@ What this step does:
 - Builds the directed graph (nodes + edges) and computes word counts, in/out degree, PageRank, betweenness, depth-from-root, internal/external outgoing link counts, and per-edge hop distances
 - Saves JSON outputs to `data/processed/nodes.json` and `data/processed/edges.json`
 
+## Web RAG backend (FastAPI + OpenAI)
+
+The `backend/` package now exposes a FastAPI service that turns arbitrary questions into grounded answers using live web search plus OpenAI’s `gpt-4o-mini`.
+
+1. Create a `.env` (or export environment variables) with:
+   - `OPENAI_API_KEY` — required for embeddings + final answers
+   - `BING_API_KEY` or `TAVILY_API_KEY` — used to fetch the top-10 web results (set `SEARCH_PROVIDER=bing` or `SEARCH_PROVIDER=tavily`)
+   - Optional: `NEXT_PUBLIC_API_URL` on the frontend if the backend isn’t running on `http://localhost:8000`
+2. Start the backend (venv activated):
+
+```bash
+uvicorn backend.app:app --reload --port 8000
+```
+
+The `/search` endpoint:
+
+- Runs a web search for the query (default top 10 hits)
+- Scrapes each page, chunks the content, embeds with `text-embedding-3-small`, and ranks it in FAISS
+- Calls `gpt-4o-mini` with the highest scoring snippets and returns a summary plus citations
+
+3. Launch the Next.js frontend (`npm install && npm run dev`) and use the search bar — it now calls the FastAPI backend, shows the AI answer, the supporting snippets, and the raw web hits for transparency.
+
 ## Configuration file
 
 - `config/pipeline.json` controls all ingestion utilities (seed URL, allowed domains, throttling, output directories, extension whitelist, snippet length, `crawler_threads`, link-map output path, etc.).
