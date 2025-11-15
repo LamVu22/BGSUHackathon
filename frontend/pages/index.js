@@ -27,6 +27,18 @@ const mockResults = [
   },
 ];
 
+const highlightStats = [
+  { label: "Pages", value: "12.4k", accent: "text-primary" },
+  { label: "PDF chunks", value: "3.2k", accent: "text-secondary" },
+  { label: "Latency", value: "2.3s", accent: "text-accent" },
+];
+
+const pipelineTiles = [
+  { title: "Crawler", status: "Complete", icon: "✅", badge: "Live" },
+  { title: "Graph", status: "Refreshing", icon: "🕸️", badge: "2 min ago" },
+  { title: "Embeddings", status: "Queued", icon: "⚙️", badge: "ETA 5m" },
+];
+
 export default function Home() {
   const [query, setQuery] = useState("best scholarships for cs majors");
   const [results, setResults] = useState(mockResults);
@@ -40,67 +52,75 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen hero-gradient pb-16">
+    <div className="min-h-screen hero-gradient pb-16 text-base-content">
       <header className="max-w-6xl mx-auto px-6 pt-16">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-6">
-            <p className="badge badge-lg badge-outline border-primary text-primary">FalconGraph Search</p>
-            <h1 className="text-4xl lg:text-5xl font-bold leading-tight">
-              Grounded AI answers for every BGSU question.
-            </h1>
-            <p className="text-lg text-base-content/70 max-w-2xl">
-              We crawl falcon resources, build a campus link graph, and use a RAG pipeline so every answer shows its source and graph neighborhood.
-            </p>
-            <div className="stats stats-vertical lg:stats-horizontal shadow">
-              <div className="stat">
-                <div className="stat-title">Pages indexed</div>
-                <div className="stat-value text-primary">12,480</div>
-                <div className="stat-desc">Updated nightly</div>
+        <div className="flex flex-col gap-10 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-6 max-w-3xl">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-[#FF6A13] text-white font-black text-lg flex items-center justify-center shadow-lg">
+                BGSU
               </div>
-              <div className="stat">
-                <div className="stat-title">PDF chunks</div>
-                <div className="stat-value text-secondary">3,210</div>
-                <div className="stat-desc">FAISS vector store</div>
-              </div>
-              <div className="stat">
-                <div className="stat-title">Avg. latency</div>
-                <div className="stat-value text-accent">2.3s</div>
-                <div className="stat-desc">LLM + retrieval</div>
+              <div>
+                <p className="text-xs uppercase tracking-[0.4em] text-base-content/60">FalconGraph Search</p>
+                <p className="text-2xl font-bold text-base-content">Campus knowledge at a glance</p>
               </div>
             </div>
+            <h1 className="text-4xl lg:text-5xl font-black leading-tight tracking-tight">
+              Ask a question. See the sources. Trust the answer.
+            </h1>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              {highlightStats.map((item) => (
+                <div
+                  key={item.label}
+                  className="rounded-2xl bg-base-100/70 backdrop-blur border border-base-300 p-4 shadow-sm"
+                >
+                  <p className="text-xs uppercase tracking-widest text-base-content/60">{item.label}</p>
+                  <p className={`text-2xl font-semibold ${item.accent}`}>{item.value}</p>
+                  <p className="text-xs text-base-content/50">Live telemetry</p>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="w-full lg:max-w-sm">
+          <div className="w-full lg:max-w-md">
             <GraphPreview />
           </div>
         </div>
       </header>
 
       <section className="max-w-5xl mx-auto px-6 mt-12">
-        <form onSubmit={handleSearch} className="card bg-base-100 shadow-2xl border border-base-300">
+        <form
+          onSubmit={handleSearch}
+          className="card bg-base-100/90 backdrop-blur-md shadow-2xl border border-base-300 overflow-hidden"
+        >
+          <div className="w-full h-2 bg-gradient-to-r from-primary via-accent to-secondary" />
           <div className="card-body gap-4">
-            <label className="form-control w-full">
-              <div className="label">
-                <span className="label-text text-sm uppercase tracking-widest">Ask anything about BGSU</span>
-                <span className="label-text-alt">RAG powered by OpenAI + FAISS</span>
-              </div>
-              <div className="flex flex-col gap-3 lg:flex-row">
-                <input
-                  type="text"
-                  className="input input-lg input-bordered w-full"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Where do I find meal plan options?"
-                />
-                <button className="btn btn-primary btn-lg w-full lg:w-auto" disabled={loading}>
-                  {loading ? <span className="loading loading-spinner loading-md"></span> : "Search"}
-                </button>
-              </div>
-            </label>
-            <div className="flex flex-wrap gap-3 text-sm text-base-content/70">
-              <span className="badge badge-outline">Scholarships</span>
-              <span className="badge badge-outline">Housing</span>
-              <span className="badge badge-outline">Course planning</span>
-              <span className="badge badge-outline">Student orgs</span>
+            <p className="text-xs uppercase tracking-[0.3em] text-base-content/60">Campus knowledge search</p>
+            <div className="relative">
+              <input
+                type="text"
+                className="input input-lg input-bordered w-full pr-16"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Where do I find meal plan options?"
+              />
+              <button
+                type="submit"
+                className="btn btn-circle btn-primary btn-sm absolute top-1/2 -translate-y-1/2 right-2 shadow-md"
+                disabled={loading}
+              >
+                {loading ? (
+                  <span className="loading loading-spinner loading-xs text-base-100" />
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="w-4 h-4 stroke-current">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M5 12h14M12 5l7 7-7 7"
+                    />
+                  </svg>
+                )}
+              </button>
             </div>
           </div>
         </form>
@@ -113,46 +133,34 @@ export default function Home() {
           ))}
         </div>
         <aside className="space-y-6">
-          <div className="card bg-base-100 shadow-lg border border-base-300">
-            <div className="card-body">
-              <h2 className="card-title">Pipeline status</h2>
-              <ul className="timeline timeline-vertical text-sm">
-                <li>
-                  <div className="timeline-start timeline-box">Crawler ingest complete</div>
-                  <div className="timeline-middle">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-5l-3-3 1.5-1.5L9 10.5l3.5-3.5L14 8.5l-5 4.5z" />
-                    </svg>
+          <div className="grid gap-4">
+            {pipelineTiles.map((tile) => (
+              <div key={tile.title} className="card bg-base-100 border border-base-200 shadow-md">
+                <div className="card-body">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{tile.icon}</span>
+                      <div>
+                        <p className="text-xs uppercase tracking-widest text-base-content/60">{tile.title}</p>
+                        <p className="text-lg font-semibold">{tile.status}</p>
+                      </div>
+                    </div>
+                    <span className="badge badge-outline">{tile.badge}</span>
                   </div>
-                  <hr />
-                </li>
-                <li>
-                  <hr />
-                  <div className="timeline-middle">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11H9v4h4v-2h-2V7z" />
-                    </svg>
-                  </div>
-                  <div className="timeline-end timeline-box">Graph metrics refreshed</div>
-                  <hr />
-                </li>
-                <li>
-                  <hr />
-                  <div className="timeline-middle">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12H9v5h4V9h-2V6z" />
-                    </svg>
-                  </div>
-                  <div className="timeline-end timeline-box">Embeddings queued</div>
-                </li>
-              </ul>
-            </div>
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="card bg-primary text-primary-content shadow-lg">
-            <div className="card-body">
-              <h3 className="card-title">Need richer data?</h3>
-              <p>Trigger a new crawl from `config/pipeline.json` and monitor ingestion from this panel.</p>
-              <button className="btn">Open pipeline config</button>
+          <div className="card bg-gradient-to-br from-primary to-accent text-primary-content shadow-xl border border-primary/40">
+            <div className="card-body space-y-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.4em]">Need richer data?</p>
+                <h3 className="text-2xl font-bold">Launch a fresh crawl</h3>
+              </div>
+              <p className="text-sm opacity-80">
+                Point to a new seed in <code>config/pipeline.json</code> and keep this dashboard open to watch it land.
+              </p>
+              <button className="btn btn-sm bg-base-100 text-primary border-none hover:bg-base-200">Open config</button>
             </div>
           </div>
         </aside>
