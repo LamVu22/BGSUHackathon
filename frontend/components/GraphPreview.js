@@ -1,42 +1,78 @@
-const sampleNodes = [
-  { id: 1, label: "Admissions", level: 1 },
-  { id: 2, label: "Financial Aid", level: 2 },
-  { id: 3, label: "Scholarships", level: 3 },
-  { id: 4, label: "Campus Life", level: 2 },
+const nodes = [
+  { id: 1, label: "Admissions", level: 1, x: 50, y: 120 },
+  { id: 2, label: "Financial Aid", level: 2, x: 150, y: 60 },
+  { id: 3, label: "Scholarships", level: 3, x: 250, y: 120 },
+  { id: 4, label: "Housing", level: 2, x: 150, y: 170 },
+  { id: 5, label: "Student Life", level: 2, x: 80, y: 40 },
 ];
 
-const sampleEdges = [
+const edges = [
   [1, 2],
   [2, 3],
   [1, 4],
+  [2, 4],
+  [5, 1],
 ];
 
 export default function GraphPreview() {
   return (
-    <div className="bg-base-100 border border-base-200 rounded-2xl p-6 h-full shadow-inner transition-all duration-200 hover:shadow-2xl hover:border-primary/40">
+    <div className="bg-base-100 border border-base-200 rounded-2xl p-5 h-full shadow-inner transition-all duration-200 hover:shadow-2xl hover:border-primary/40">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <p className="text-xs uppercase tracking-widest text-secondary">Graph context</p>
+          <p className="text-xs uppercase tracking-[0.35em] text-secondary">Graph context</p>
           <p className="text-lg font-semibold">Link neighborhood</p>
         </div>
         <button className="btn btn-xs btn-outline hover:btn-primary transition-colors duration-200">Expand</button>
       </div>
-      <div className="grid grid-cols-2 gap-4">
-        {sampleNodes.map((node) => (
-          <div
-            key={node.id}
-            className="p-3 rounded-xl border border-dashed border-primary/30 flex flex-col gap-1 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/60 hover:bg-primary/5"
-          >
-            <span className="text-xs text-secondary">Depth {node.level}</span>
-            <span className="font-medium text-sm">{node.label}</span>
-          </div>
+
+      <svg viewBox="0 0 300 220" className="w-full h-48 text-base-content/50">
+        <defs>
+          <linearGradient id="edgeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#f26522" stopOpacity="0.3" />
+            <stop offset="100%" stopColor="#3aafa9" stopOpacity="0.6" />
+          </linearGradient>
+          <radialGradient id="nodeGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="rgba(242,101,34,0.8)" />
+            <stop offset="100%" stopColor="rgba(242,101,34,0)" />
+          </radialGradient>
+        </defs>
+        <rect x="0" y="0" width="300" height="220" rx="16" fill="url(#nodeGlow)" opacity="0.08" />
+        {edges.map(([from, to]) => {
+          const source = nodes.find((n) => n.id === from);
+          const target = nodes.find((n) => n.id === to);
+          return (
+            <line
+              key={`${from}-${to}`}
+              x1={source.x}
+              y1={source.y}
+              x2={target.x}
+              y2={target.y}
+              stroke="url(#edgeGradient)"
+              strokeWidth="3"
+              strokeLinecap="round"
+              className="transition-all duration-300"
+            />
+          );
+        })}
+        {nodes.map((node) => (
+          <g key={node.id}>
+            <circle
+              cx={node.x}
+              cy={node.y}
+              r="14"
+              fill={node.level === 1 ? "#f26522" : node.level === 3 ? "#3aafa9" : "#fbbf24"}
+              className="drop-shadow-md"
+            />
+            <text x={node.x} y={node.y + 30} textAnchor="middle" className="text-[10px] fill-current">
+              {node.label}
+            </text>
+          </g>
         ))}
-      </div>
-      <div className="mt-6">
-        <p className="text-xs text-base-content/60">
-          {sampleEdges.length} edges highlight how evidence flows into the summary.
-        </p>
-      </div>
+      </svg>
+
+      <p className="mt-3 text-xs text-base-content/60">
+        {edges.length} link signals plotted from the latest crawl snapshot.
+      </p>
     </div>
   );
 }
