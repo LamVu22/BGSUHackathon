@@ -1,5 +1,6 @@
 # Virtual environment
 bg-hack-env/
+venv/
 
 # Python
 __pycache__/
@@ -30,3 +31,6 @@ data/
 
 # virtual environment
 bg-hack-env/
+
+/frontend/.next/
+/frontend/node_modules/
