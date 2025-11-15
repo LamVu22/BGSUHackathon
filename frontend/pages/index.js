@@ -144,7 +144,7 @@ export default function Home({ theme, toggleTheme }) {
             </div>
           </div>
           <div className="w-full lg:max-w-md">
-            <GraphPreview />
+            <GraphPreview theme={theme} />
           </div>
         </div>
       </header>
