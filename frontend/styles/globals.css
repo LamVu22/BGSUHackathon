@@ -11,14 +11,35 @@ body {
 }
 
 .hero-gradient {
+  position: relative;
+  overflow: hidden;
   background: radial-gradient(circle at top left, rgba(242,101,34,0.25), transparent 36%),
     radial-gradient(circle at top right, rgba(58,175,169,0.2), transparent 40%),
     linear-gradient(180deg, #f9fafb, #f1f5f9);
   transition: background 0.4s ease;
 }
 
+.hero-gradient::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: linear-gradient(125deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 40%),
+    radial-gradient(circle at 20% 20%, rgba(242,101,34,0.08), transparent 45%),
+    radial-gradient(circle at 80% 0%, rgba(58,175,169,0.12), transparent 50%);
+  mix-blend-mode: screen;
+  opacity: 0.8;
+}
+
 html[data-theme="falconDark"] .hero-gradient {
   background: radial-gradient(circle at top left, rgba(245,144,79,0.15), transparent 35%),
     radial-gradient(circle at top right, rgba(100,216,209,0.12), transparent 45%),
     linear-gradient(180deg, #0b1120, #111827 60%, #0b1120);
+}
+
+html[data-theme="falconDark"] .hero-gradient::after {
+  background-image: linear-gradient(125deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0) 40%),
+    radial-gradient(circle at 20% 20%, rgba(255,139,92,0.15), transparent 45%),
+    radial-gradient(circle at 80% 0%, rgba(58,175,169,0.18), transparent 50%);
+  mix-blend-mode: screen;
 }

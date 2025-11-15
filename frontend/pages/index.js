@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import GraphPreview from "../components/GraphPreview";
 import SearchResultCard from "../components/SearchResultCard";
+import HistoryDrawer from "../components/HistoryDrawer";
 
 const mockResults = [
   {
@@ -38,6 +39,8 @@ export default function Home({ theme, toggleTheme }) {
   const [results, setResults] = useState(mockResults);
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [history, setHistory] = useState([]);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const isDarkMode = theme === "falconDark";
 
   useEffect(() => {
@@ -46,9 +49,25 @@ export default function Home({ theme, toggleTheme }) {
 
   const handleSearch = async (event) => {
     event.preventDefault();
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) return;
+    const timestamp = new Date();
+    setHistory((prev) => [
+      {
+        id: timestamp.getTime(),
+        query: trimmedQuery,
+        timestamp: timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      },
+      ...prev,
+    ]);
     setLoading(true);
     // TODO: call FastAPI backend `/search` once available
     setTimeout(() => setLoading(false), 800);
+  };
+
+  const handleHistorySelect = (value) => {
+    setQuery(value);
+    setHistoryOpen(false);
   };
 
   return (
@@ -97,7 +116,7 @@ export default function Home({ theme, toggleTheme }) {
         </div>
       </header>
 
-      <main className="flex-1 w-full max-w-5xl mx-auto px-6 flex flex-col gap-4 pb-6">
+      <main className="relative flex-1 w-full max-w-5xl mx-auto px-6 flex flex-col gap-4 pb-6">
         <section className="w-full">
           <form
             onSubmit={handleSearch}
@@ -105,7 +124,16 @@ export default function Home({ theme, toggleTheme }) {
           >
             <div className="w-full h-1 bg-gradient-to-r from-primary via-accent to-secondary" />
             <div className="card-body gap-3">
-              <p className="text-[10px] uppercase tracking-[0.35em] text-base-content/60">Ask the campus graph</p>
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] uppercase tracking-[0.35em] text-base-content/60">Ask the campus graph</p>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-xs text-primary"
+                  onClick={() => setHistoryOpen((prev) => !prev)}
+                >
+                  {historyOpen ? "Hide history" : "Show history"}
+                </button>
+              </div>
               <div className="relative">
                 <input
                   type="text"
@@ -138,12 +166,32 @@ export default function Home({ theme, toggleTheme }) {
         </section>
         <section className="flex-1 overflow-hidden rounded-2xl bg-base-100/60 border border-base-300 shadow-inner p-4">
           <div className="space-y-4 h-full overflow-y-auto pr-2">
-            {results.map((result) => (
-              <SearchResultCard key={result.id} result={result} />
-            ))}
+            {loading
+              ? Array.from({ length: 3 }).map((_, index) => <ResultSkeleton key={index} />)
+              : results.map((result) => <SearchResultCard key={result.id} result={result} />)}
           </div>
         </section>
       </main>
+      <HistoryDrawer open={historyOpen} history={history} onSelect={handleHistorySelect} onClose={() => setHistoryOpen(false)} />
+    </div>
+  );
+}
+
+function ResultSkeleton() {
+  return (
+    <div className="card bg-base-100 border border-base-200 shadow animate-pulse">
+      <div className="card-body space-y-3">
+        <div className="flex items-center gap-2">
+          <div className="h-4 w-20 rounded-full bg-base-200" />
+          <div className="h-3 w-16 rounded-full bg-base-200" />
+        </div>
+        <div className="h-5 w-3/4 rounded bg-base-200" />
+        <div className="h-3 w-full rounded bg-base-200" />
+        <div className="flex gap-2">
+          <div className="h-6 w-20 rounded-full bg-base-200" />
+          <div className="h-6 w-24 rounded-full bg-base-200" />
+        </div>
+      </div>
     </div>
   );
 }
