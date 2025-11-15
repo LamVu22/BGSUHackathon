@@ -2,37 +2,16 @@
 
 FalconGraph Search — an AI-powered campus search prototype that builds a link graph of BGSU resources, stores page/PDF chunks in a vector index, and uses a RAG LLM pipeline to answer questions with grounded summaries and an interactive graph showing where answers came from.
 
-## Virtual environment
+## Virtual environment (Python backend)
 
-Create a local Python virtual environment (if you don’t already have `bg-hack-env`) with:
+Create (or reuse) a virtual environment at the repo root:
 
 ```bash
 python3 -m venv bg-hack-env
-```
-
-# BGSUHackathon
-
-FalconGraph Search — an AI-powered campus search prototype that builds a link graph of BGSU resources, stores page/PDF chunks in a vector index, and uses a RAG LLM pipeline to answer questions with grounded summaries and an interactive graph showing where answers came from.
-
-## Virtual environment
-
-A Python virtual environment has been created for this project at:
-
-```
-./bg-hack-env
-```
-
-Activate it in zsh with:
-
-```bash
 source ./bg-hack-env/bin/activate
 ```
 
-To deactivate:
-
-```bash
-deactivate
-```
+Deactivate with `deactivate` when you are done. The directory `bg-hack-env/` is already gitignored.
 
 ## Dependencies (Python backend)
 
@@ -123,27 +102,29 @@ Once dependencies are installed and the venv is activated, you can start a FastA
 uvicorn backend.app:app --reload --port 8000
 ```
 
-## Crawl BGSU content locally
+## Crawl BGSU content (C++ downloader)
 
-You can download raw site data with the experimental C++/OpenMP crawler located in `cpp/` (see details below). It stores everything under `data/raw/` (`html/`, `files/`, plus `metadata.tsv` mapping URLs to files) and reads the same `config/pipeline.json` values.
+The parallel crawler lives in `cpp/` and replaces the earlier Python script. It reads `config/pipeline.json`, runs multiple threads (OpenMP), and saves downloads under `data/raw/` (`html/`, `files/`, `metadata.tsv`).
 
-## C++/OpenMP crawler
+Prerequisites (macOS/Homebrew example):
 
-If you want a highly parallel downloader, build the C++ crawler located in `cpp/` (requires Make, a C++20 compiler, libcurl, and OpenMP):
+```bash
+brew install gcc libcurl        # installs g++-14 with OpenMP support
+```
+
+Build and run (from repo root):
 
 ```bash
 cd cpp
-make         # builds ./bgsu_crawler
-./bgsu_crawler
+CXX=g++-14 make          # or set CXX to whichever compiler has OpenMP
+./bgsu_crawler           # run from repo root or any subdir; the binary walks up to find config/pipeline.json
 ```
 
 Key traits:
-- Uses OpenMP to fan out across `crawler_threads` (defaults to hardware concurrency or read from `config/pipeline.json`).
-- Stores data in the same `data/raw/` hierarchy (HTML under `html/`, assets under `files/`, metadata appended to `metadata.tsv`).
-- Reads the same config file (start URL, allowed domains, extension whitelist, crawl limits, delay, etc.).
-- Only handles downloading; continue to use the Python scripts (`build_graph.py`, etc.) to clean content and build the graph once the C++ crawler finishes.
-
-This downloader replaces the old Python crawler. After it finishes, run the Python scripts (`link_map.py`, `build_graph.py`, etc.) to inspect links, clean content, and build the graph.
+- Uses OpenMP to fan out across `crawler_threads` (defaults to hardware concurrency or the value in `config/pipeline.json`).
+- Avoids duplicate work via shared `visited`/`queued` sets, so threads never fetch the same link twice.
+- Stops when the queue empties; set `max_pages` in the config if you want a finite crawl.
+- Downloads only (no cleaning); run the Python scripts below afterward.
 
 ## Inspect link structure quickly
 

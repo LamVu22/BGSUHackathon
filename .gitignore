@@ -34,3 +34,5 @@ bg-hack-env/
 
 /frontend/.next/
 /frontend/node_modules/
+
+/cpp/bgsu_crawler
