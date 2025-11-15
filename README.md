@@ -125,27 +125,25 @@ uvicorn backend.app:app --reload --port 8000
 
 ## Crawl BGSU content locally
 
-Use `scripts/crawl_bgsu.py` to download HTML pages and linked assets (PDFs, text, etc.) for offline processing. Run it from the repo root (after activating the venv):
+Use `scripts/crawl_bgsu.py` to run the entire ingestion pipeline (crawl + graph build) in one step with baked-in defaults:
 
 ```bash
-python scripts/crawl_bgsu.py \
-  --start-url https://www.bgsu.edu \
-  --output-dir data/raw \
-  --max-pages 750
+python scripts/crawl_bgsu.py
 ```
 
-What it does:
-- Respects `robots.txt`
-- Crawls within `bgsu.edu` domains only (configurable via `--domains`)
-- Saves HTML under `data/raw/html/`, other assets under `data/raw/files/`
-- Appends records to `data/raw/metadata.tsv` containing URL, saved path, and MIME type
+What happens when you run it:
+- Crawls from `https://www.bgsu.edu`, respecting `robots.txt`, following links across the whitelisted BGSU domains, downloading HTML plus linked assets (PDFs, docs, JSON feeds, etc.), and storing everything under `data/raw/` (HTML in `data/raw/html/`, other assets in `data/raw/files/`, metadata logged to `data/raw/metadata.tsv`).
+- Parses the downloaded HTML to extract nodes/edges, enriches nodes with doc type, title, word count, PageRank, betweenness, in/out degree, and depth-from-root metrics, and saves the processed graph to `data/processed/nodes.json` + `data/processed/edges.json`.
 
-Useful flags:
-- `--max-pages`: limit the crawl size per run
-- `--delay`: throttle requests (seconds between HTTP calls)
-- `--extensions`: whitelist of file extensions to capture
+Need to tweak settings (domains, throttling, output paths, etc.)? Edit `config/pipeline.json`. The script automatically loads that file (or an alternate path via the `PIPELINE_CONFIG` environment variable) and applies the values to the pipeline—no CLI flags required.
 
-Codex cannot access the public internet from this environment, so run the crawler locally on your machine with network access. The script now resolves the output directory relative to the repository root, so your data always lands under `data/raw/` even if you launch the crawler from inside `scripts/`. Commit or share the downloaded artifacts as needed for downstream graph/embedding pipelines (but note `data/` is gitignored by default).
+Codex cannot access the public internet from this environment, so run the script locally on your machine with network access. Output directories resolve relative to the repo root so artifacts always land under `data/` (which is gitignored by default).
+
+### Configuration file
+
+- `config/pipeline.json` controls crawl/graph behavior (seed URL, allowed domains, throttling, output directories, extension whitelist, etc.).
+- The script automatically reads this file; adjust values there instead of passing command-line flags.
+- To use a different config file temporarily, set `PIPELINE_CONFIG=/path/to/custom.json` before running the script.
 
 ## Notes
 
