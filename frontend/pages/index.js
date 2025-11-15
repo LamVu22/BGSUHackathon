@@ -246,7 +246,13 @@ export default function Home({ theme, toggleTheme }) {
           </div>
         </section>
       </main>
-      <HistoryDrawer open={historyOpen} history={history} onSelect={handleHistorySelect} onClose={() => setHistoryOpen(false)} />
+      <HistoryDrawer
+        open={historyOpen}
+        history={history}
+        onSelect={handleHistorySelect}
+        onClose={() => setHistoryOpen(false)}
+        onClear={() => setHistory([])}
+      />
     </div>
   );
 }

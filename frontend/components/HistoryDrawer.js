@@ -1,4 +1,4 @@
-export default function HistoryDrawer({ open, history, onSelect, onClose }) {
+export default function HistoryDrawer({ open, history, onSelect, onClose, onClear }) {
   return (
     <aside
       className={`fixed top-28 right-4 w-72 max-w-[90vw] bg-base-100 border border-base-300 rounded-2xl shadow-2xl transition-transform duration-300 z-20 ${
@@ -10,9 +10,16 @@ export default function HistoryDrawer({ open, history, onSelect, onClose }) {
           <p className="text-xs uppercase tracking-[0.4em] text-base-content/60">History</p>
           <p className="text-sm font-semibold">Recent queries</p>
         </div>
-        <button className="btn btn-xs btn-ghost" onClick={onClose}>
-          Close
-        </button>
+        <div className="flex items-center gap-2">
+          {history.length > 0 && (
+            <button className="btn btn-ghost btn-xs text-error" onClick={onClear}>
+              Clear
+            </button>
+          )}
+          <button className="btn btn-xs btn-ghost" onClick={onClose}>
+            Close
+          </button>
+        </div>
       </div>
       <div className="max-h-80 overflow-y-auto px-4 py-3">
         {history.length === 0 ? (
