@@ -1,32 +1,8 @@
 import { useState, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
 import GraphPreview from "../components/GraphPreview";
 import SearchResultCard from "../components/SearchResultCard";
 import HistoryDrawer from "../components/HistoryDrawer";
-
-const mockResults = [
-  {
-    id: 1,
-    title: "How do I apply for BGSU scholarships?",
-    type: "answer",
-    domain: "bgsu.edu",
-    snippet:
-      "Visit the Falcon Scholarship application portal, submit FAFSA by Jan 15, and attach your academic resume to unlock donor-funded awards tied to your major.",
-    citations: [
-      { label: "Scholarships & Aid", url: "https://www.bgsu.edu/financial-aid" },
-      { label: "Honors College", url: "https://www.bgsu.edu/honors" },
-    ],
-  },
-  {
-    id: 2,
-    title: "Key submission deadlines",
-    type: "insight",
-    domain: "bgsu.edu",
-    snippet: "FAFSA priority deadline is January 15 and Falcon Guarantee deposit is May 1 for Fall admits.",
-    citations: [
-      { label: "Admissions Calendar", url: "https://www.bgsu.edu/admissions" },
-    ],
-  },
-];
 
 const headlineSegments = [
   "Ask a question.",
@@ -40,9 +16,19 @@ const highlightStats = [
   { label: "Latency", value: 2.3, suffix: "s", accent: "text-accent", decimals: 1 },
 ];
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+const domainFromUrl = (url = "") => {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return "";
+  }
+};
+
 export default function Home({ theme, toggleTheme }) {
   const [query, setQuery] = useState("best scholarships for cs majors");
-  const [results, setResults] = useState(mockResults);
+  const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [segmentIndex, setSegmentIndex] = useState(0);
@@ -50,6 +36,9 @@ export default function Home({ theme, toggleTheme }) {
   const [statValues, setStatValues] = useState(
     highlightStats.map(() => 0)
   );
+  const [answer, setAnswer] = useState("");
+  const [searchMeta, setSearchMeta] = useState([]);
+  const [errorMessage, setErrorMessage] = useState("");
   const [history, setHistory] = useState([]);
   const [historyOpen, setHistoryOpen] = useState(false);
   const isDarkMode = theme === "falconDark";
@@ -119,8 +108,38 @@ export default function Home({ theme, toggleTheme }) {
       ...prev,
     ]);
     setLoading(true);
-    // TODO: call FastAPI backend `/search` once available
-    setTimeout(() => setLoading(false), 800);
+    setErrorMessage("");
+    try {
+      const response = await fetch(`${API_BASE_URL}/search`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: trimmedQuery }),
+      });
+      if (!response.ok) {
+        const detail = await response.json().catch(() => ({}));
+        throw new Error(detail.detail || "Search failed.");
+      }
+      const data = await response.json();
+      const formattedCitations = (data.citations || []).map((item, index) => ({
+        id: item.id || index + 1,
+        type: item.type || "web",
+        domain: item.domain || domainFromUrl(item.url),
+        title: item.title || "Untitled",
+        snippet: item.snippet || "",
+        score: item.score ?? null,
+        citations: [{ label: "Open link", url: item.url }],
+      }));
+      setAnswer(data.answer || "");
+      setResults(formattedCitations);
+      setSearchMeta(data.search_results || []);
+    } catch (error) {
+      setErrorMessage(error.message || "Search failed.");
+      setAnswer("");
+      setResults([]);
+      setSearchMeta([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleHistorySelect = (value) => {
@@ -240,9 +259,45 @@ export default function Home({ theme, toggleTheme }) {
         </section>
         <section className="flex-1 overflow-hidden rounded-2xl bg-base-100/60 border border-base-300 shadow-inner p-4">
           <div className="space-y-4 h-full overflow-y-auto pr-2">
+            {errorMessage && (
+              <div className="alert alert-error shadow">
+                <span>{errorMessage}</span>
+              </div>
+            )}
+            {!loading && answer && (
+              <div className="card bg-base-100 shadow border border-base-200">
+                <div className="card-body">
+                  <p className="text-xs uppercase tracking-[0.4em] text-base-content/60">FalconGraph answer</p>
+                  <div className="prose prose-sm max-w-none text-base-content/90">
+                    <ReactMarkdown>{answer}</ReactMarkdown>
+                  </div>
+                  <p className="text-xs text-base-content/50">Citations below reference the numbered snippets in this summary.</p>
+                </div>
+              </div>
+            )}
             {loading
               ? Array.from({ length: 3 }).map((_, index) => <ResultSkeleton key={index} />)
               : results.map((result) => <SearchResultCard key={result.id} result={result} />)}
+            {!loading && !results.length && !answer && !errorMessage && (
+              <p className="text-sm text-base-content/60">Ask a question to see grounded results.</p>
+            )}
+            {!loading && searchMeta.length > 0 && (
+              <div className="card bg-base-100 shadow border border-dashed border-base-300">
+                <div className="card-body space-y-3">
+                  <p className="text-xs uppercase tracking-[0.4em] text-base-content/60">Top web hits</p>
+                  <ul className="space-y-2 text-sm">
+                    {searchMeta.map((item) => (
+                      <li key={item.url} className="border-b border-base-200 pb-2 last:border-none last:pb-0">
+                        <a href={item.url} target="_blank" rel="noreferrer" className="link link-primary font-semibold">
+                          {item.title}
+                        </a>
+                        <p className="text-xs text-base-content/70 mt-1">{item.snippet}</p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
           </div>
         </section>
       </main>
