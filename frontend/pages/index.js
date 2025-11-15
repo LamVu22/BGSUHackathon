@@ -41,6 +41,7 @@ export default function Home({ theme, toggleTheme }) {
   const [stats, setStats] = useState(BASE_STATS.map((stat) => ({ ...stat, value: 0 })));
   const [answer, setAnswer] = useState("");
   const [searchMeta, setSearchMeta] = useState([]);
+  const [graphContext, setGraphContext] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [history, setHistory] = useState([]);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -117,6 +118,7 @@ export default function Home({ theme, toggleTheme }) {
       setAnswer(data.answer || "");
       setResults(formattedCitations);
       setSearchMeta(data.search_results || []);
+      setGraphContext(data.graph_context || null);
       const payloadStats = data.stats || {};
       setStats(
         BASE_STATS.map((stat) => ({
@@ -129,6 +131,7 @@ export default function Home({ theme, toggleTheme }) {
       setAnswer("");
       setResults([]);
       setSearchMeta([]);
+      setGraphContext(null);
       setStats(BASE_STATS.map((stat) => ({ ...stat, value: 0 })));
     } finally {
       setLoading(false);
@@ -193,7 +196,7 @@ export default function Home({ theme, toggleTheme }) {
             </div>
           </div>
           <div className="w-full lg:max-w-md">
-            <GraphPreview theme={theme} />
+            <GraphPreview theme={theme} graphContext={graphContext} />
           </div>
         </div>
       </header>

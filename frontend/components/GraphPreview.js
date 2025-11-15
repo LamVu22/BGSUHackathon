@@ -1,19 +1,19 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
-const nodes = [
-  { id: 1, label: "Admissions", level: 1, x: 50, y: 120 },
-  { id: 2, label: "Financial Aid", level: 2, x: 150, y: 60 },
-  { id: 3, label: "Scholarships", level: 3, x: 250, y: 120 },
-  { id: 4, label: "Housing", level: 2, x: 150, y: 170 },
-  { id: 5, label: "Student Life", level: 2, x: 80, y: 40 },
+const FALLBACK_NODES = [
+  { id: 1, label: "Admissions", level: 1, domain: "bgsu.edu", url: "#", score: 0.7 },
+  { id: 2, label: "Financial Aid", level: 2, domain: "bgsu.edu", url: "#", score: 0.65 },
+  { id: 3, label: "Scholarships", level: 3, domain: "bgsu.edu", url: "#", score: 0.6 },
+  { id: 4, label: "Housing", level: 2, domain: "bgsu.edu", url: "#", score: 0.55 },
+  { id: 5, label: "Student Life", level: 2, domain: "bgsu.edu", url: "#", score: 0.5 },
 ];
 
-const edges = [
-  [1, 2],
-  [2, 3],
-  [1, 4],
-  [2, 4],
-  [5, 1],
+const FALLBACK_EDGES = [
+  { source: 1, target: 2 },
+  { source: 2, target: 3 },
+  { source: 1, target: 4 },
+  { source: 2, target: 4 },
+  { source: 5, target: 1 },
 ];
 
 const levelStyles = {
@@ -22,12 +22,40 @@ const levelStyles = {
   3: { base: "#3aafa9", light: "#d7f7f5" },
 };
 
-export default function GraphPreview({ theme = "falcon" }) {
+const POSITIONS = [
+  { x: 50, y: 120 },
+  { x: 150, y: 60 },
+  { x: 250, y: 120 },
+  { x: 150, y: 170 },
+  { x: 80, y: 40 },
+];
+
+function mapNodes(rawNodes = []) {
+  const base = rawNodes.length ? rawNodes.slice(0, 5) : FALLBACK_NODES;
+  return base.map((node, index) => ({
+    ...node,
+    level: node.level || ((index % 3) + 1),
+    ...POSITIONS[index % POSITIONS.length],
+  }));
+}
+
+function mapEdges(rawEdges = [], nodes) {
+  if (!rawEdges.length) {
+    return FALLBACK_EDGES;
+  }
+  const validIds = new Set(nodes.map((node) => node.id));
+  return rawEdges.filter((edge) => validIds.has(edge.source) && validIds.has(edge.target));
+}
+
+export default function GraphPreview({ theme = "falcon", graphContext }) {
   const [expanded, setExpanded] = useState(false);
   const isDark = theme === "falconDark";
   const beamStroke = isDark ? "rgba(255,255,255,0.45)" : "rgba(31,41,55,0.45)";
   const pulseColor = isDark ? "#ffffff" : "#f26522";
   const nodeGlowOpacity = isDark ? 0.12 : 0.08;
+
+  const nodes = useMemo(() => mapNodes(graphContext?.nodes), [graphContext]);
+  const edges = useMemo(() => mapEdges(graphContext?.edges, nodes), [graphContext, nodes]);
 
   return (
     <div className="bg-base-100 border border-base-200 rounded-2xl p-5 h-full shadow-inner transition-all duration-200 hover:shadow-2xl hover:border-primary/40">
@@ -74,15 +102,15 @@ export default function GraphPreview({ theme = "falcon" }) {
               </defs>
               <rect x="0" y="0" width="600" height="360" rx="24" fill="url(#nodeGlowExpanded)" opacity={nodeGlowOpacity} />
               <ellipse cx="300" cy="240" rx="220" ry="90" fill={isDark ? "rgba(15,23,42,0.85)" : "rgba(148,163,184,0.35)"} />
-              {edges.map(([from, to], index) => {
-                const source = nodes.find((n) => n.id === from);
-                const target = nodes.find((n) => n.id === to);
+              {edges.map((edge, index) => {
+                const source = nodes.find((n) => n.id === edge.source);
+                const target = nodes.find((n) => n.id === edge.target);
                 if (!source || !target) return null;
                 const scaledSource = { x: source.x * 2, y: source.y * 1.5 };
                 const scaledTarget = { x: target.x * 2, y: target.y * 1.5 };
                 const path = `M ${scaledSource.x} ${scaledSource.y} L ${scaledTarget.x} ${scaledTarget.y}`;
                 return (
-                  <g key={`modal-${from}-${to}`}>
+                  <g key={`modal-${edge.source}-${edge.target}`}>
                     <path d={path} stroke="url(#edgeGradientExpanded)" strokeWidth="4" strokeLinecap="round" fill="none" />
                     <path d={path} stroke={beamStroke} strokeWidth="1.5" strokeDasharray="6 12" strokeLinecap="round">
                       <animate attributeName="stroke-dashoffset" from="0" to="-60" dur="2s" repeatCount="indefinite" begin={`${index * 0.2}s`} />
@@ -125,7 +153,7 @@ export default function GraphPreview({ theme = "falcon" }) {
       <div className="flex items-center justify-between mb-4">
         <div>
           <p className="text-xs uppercase tracking-[0.35em] text-secondary">Graph context</p>
-          <p className="text-lg font-semibold">Link neighborhood</p>
+          <p className="text-lg font-semibold">{graphContext?.nodes?.length ? "Answer neighborhood" : "Link neighborhood"}</p>
         </div>
         <button className="btn btn-xs btn-outline hover:btn-primary transition-colors duration-200" onClick={() => setExpanded(true)}>
           Expand
@@ -155,12 +183,15 @@ export default function GraphPreview({ theme = "falcon" }) {
         </defs>
         <rect x="0" y="0" width="300" height="220" rx="16" fill="url(#nodeGlow)" opacity={nodeGlowOpacity} />
         <ellipse cx="150" cy="150" rx="110" ry="60" fill={isDark ? "rgba(15,23,42,0.8)" : "rgba(148,163,184,0.25)"} />
-        {edges.map(([from, to], index) => {
-          const source = nodes.find((n) => n.id === from);
-          const target = nodes.find((n) => n.id === to);
+        {edges.map((edge, index) => {
+          const source = nodes.find((n) => n.id === edge.source);
+          const target = nodes.find((n) => n.id === edge.target);
+          if (!source || !target) {
+            return null;
+          }
           const path = `M ${source.x} ${source.y} L ${target.x} ${target.y}`;
           return (
-            <g key={`${from}-${to}`}>
+            <g key={`${edge.source}-${edge.target}`}>
               <path
                 d={path}
                 stroke="url(#edgeGradient)"
