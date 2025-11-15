@@ -126,6 +126,16 @@ Key traits:
 - Stops when the queue empties; set `max_pages` in the config if you want a finite crawl.
 - Downloads only (no cleaning); run the Python scripts below afterward.
 
+## Clean content (HTML, PDFs, docs, spreadsheets)
+
+After crawling, run the cleaning step to extract text/snippets and link structure (multi-threaded, with periodic checkpoints):
+
+```bash
+python scripts/clean_content.py
+```
+
+This generates/updates `data/processed/clean_nodes.json` and `data/processed/clean_edges.json`, where each node already contains cleaned text/snippets (from HTML pages plus PDFs/DOCX files), document metadata, and each edge records anchor text between source→target URLs. Progress logs appear every ~50 files, and checkpoints are written so you don’t lose work if interrupted.
+
 ## Inspect link structure quickly
 
 If you want a lightweight view of the site graph (unique URLs + edges) before downloading everything, run:
@@ -138,16 +148,15 @@ This scanner performs a BFS but only collects link structure, writing stats and 
 
 ## Clean content & build the graph
 
-After crawling, run `scripts/build_graph.py` to parse the downloaded HTML, clean the text, extract link structure, and compute graph metrics:
+Once `clean_content.py` has produced the intermediate JSON files, build the graph metrics:
 
 ```bash
 python scripts/build_graph.py
 ```
 
 What this step does:
-- Reads `data/raw/metadata.tsv` and every saved HTML file
-- Strips scripts/styles/boilerplate, stores cleaned text and snippets on each node
-- Builds the directed graph (nodes + edges) and computes word counts, in/out degree, PageRank, betweenness, and depth-from-root metrics
+- Consumes `data/processed/clean_nodes.json` + `clean_edges.json`
+- Builds the directed graph (nodes + edges) and computes word counts, in/out degree, PageRank, betweenness, depth-from-root, internal/external outgoing link counts, and per-edge hop distances
 - Saves JSON outputs to `data/processed/nodes.json` and `data/processed/edges.json`
 
 ## Configuration file
