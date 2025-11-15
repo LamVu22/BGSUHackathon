@@ -125,25 +125,36 @@ uvicorn backend.app:app --reload --port 8000
 
 ## Crawl BGSU content locally
 
-Use `scripts/crawl_bgsu.py` to run the entire ingestion pipeline (crawl + graph build) in one step with baked-in defaults:
+Use `scripts/crawl_bgsu.py` to download raw site data (HTML plus linked assets). The script stores everything under `data/raw/` and appends URL/path metadata for later processing.
 
 ```bash
 python scripts/crawl_bgsu.py
 ```
 
 What happens when you run it:
-- Crawls from `https://www.bgsu.edu`, respecting `robots.txt`, following links across the whitelisted BGSU domains, downloading HTML plus linked assets (PDFs, docs, JSON feeds, etc.), and storing everything under `data/raw/` (HTML in `data/raw/html/`, other assets in `data/raw/files/`, metadata logged to `data/raw/metadata.tsv`).
-- Parses the downloaded HTML to extract nodes/edges, enriches nodes with doc type, title, word count, PageRank, betweenness, in/out degree, and depth-from-root metrics, and saves the processed graph to `data/processed/nodes.json` + `data/processed/edges.json`.
+- Crawls from `https://www.bgsu.edu`, respecting `robots.txt`, following links across the whitelisted domains, downloading HTML plus linked assets (PDFs, docs, JSON feeds, etc.), and storing everything under `data/raw/` (`html/`, `files/`, plus `metadata.tsv` mapping URLs to files).
 
-Need to tweak settings (domains, throttling, output paths, etc.)? Edit `config/pipeline.json`. The script automatically loads that file (or an alternate path via the `PIPELINE_CONFIG` environment variable) and applies the values to the pipeline—no CLI flags required.
+## Clean content & build the graph
 
-Codex cannot access the public internet from this environment, so run the script locally on your machine with network access. Output directories resolve relative to the repo root so artifacts always land under `data/` (which is gitignored by default).
+After crawling, run `scripts/build_graph.py` to parse the downloaded HTML, clean the text, extract link structure, and compute graph metrics:
 
-### Configuration file
+```bash
+python scripts/build_graph.py
+```
 
-- `config/pipeline.json` controls crawl/graph behavior (seed URL, allowed domains, throttling, output directories, extension whitelist, etc.).
-- The script automatically reads this file; adjust values there instead of passing command-line flags.
-- To use a different config file temporarily, set `PIPELINE_CONFIG=/path/to/custom.json` before running the script.
+What this step does:
+- Reads `data/raw/metadata.tsv` and every saved HTML file
+- Strips scripts/styles/boilerplate, stores cleaned text and snippets on each node
+- Builds the directed graph (nodes + edges) and computes word counts, in/out degree, PageRank, betweenness, and depth-from-root metrics
+- Saves JSON outputs to `data/processed/nodes.json` and `data/processed/edges.json`
+
+## Configuration file
+
+- `config/pipeline.json` controls both scripts (seed URL, allowed domains, throttling, output directories, extension whitelist, snippet length, etc.).
+- Each script automatically reads this file; adjust values there instead of passing command-line flags.
+- To use a different config file temporarily, set `PIPELINE_CONFIG=/path/to/custom.json` before running the scripts.
+
+Codex cannot access the public internet from this environment, so run the crawler locally on your machine with network access. Output directories resolve relative to the repo root so artifacts always land under `data/` (which is gitignored by default).
 
 ## Notes
 

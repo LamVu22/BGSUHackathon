@@ -38,5 +38,6 @@
     ".mp3",
     ".mp4"
   ],
-  "root_url": "https://www.bgsu.edu"
+  "root_url": "https://www.bgsu.edu",
+  "graph_snippet_chars": 600
 }
