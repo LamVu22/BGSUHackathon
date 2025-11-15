@@ -1,0 +1,29 @@
+# Virtual environment
+bg-hack-env/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environments
+.env
+.venv
+
+# Editor/IDE
+.vscode/
+.idea/
+
+# Node
+node_modules/
+
+# Build
+dist/
+build/
+
+# OS
+.DS_Store
+
+# virtual environment
+bg-hack-env/

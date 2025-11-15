@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+requests
+beautifulsoup4
+python-dotenv
+openai
+PyMuPDF
+faiss-cpu
+networkx
+numpy
+python-multipart
