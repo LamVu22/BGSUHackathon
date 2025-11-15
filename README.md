@@ -125,14 +125,35 @@ uvicorn backend.app:app --reload --port 8000
 
 ## Crawl BGSU content locally
 
-Use `scripts/crawl_bgsu.py` to download raw site data (HTML plus linked assets). The script stores everything under `data/raw/` and appends URL/path metadata for later processing.
+You can download raw site data with the experimental C++/OpenMP crawler located in `cpp/` (see details below). It stores everything under `data/raw/` (`html/`, `files/`, plus `metadata.tsv` mapping URLs to files) and reads the same `config/pipeline.json` values.
+
+## C++/OpenMP crawler
+
+If you want a highly parallel downloader, build the C++ crawler located in `cpp/` (requires Make, a C++20 compiler, libcurl, and OpenMP):
 
 ```bash
-python scripts/crawl_bgsu.py
+cd cpp
+make         # builds ./bgsu_crawler
+./bgsu_crawler
 ```
 
-What happens when you run it:
-- Crawls from `https://www.bgsu.edu`, respecting `robots.txt`, following links across the whitelisted domains, downloading HTML plus linked assets (PDFs, docs, JSON feeds, etc.), and storing everything under `data/raw/` (`html/`, `files/`, plus `metadata.tsv` mapping URLs to files).
+Key traits:
+- Uses OpenMP to fan out across `crawler_threads` (defaults to hardware concurrency or read from `config/pipeline.json`).
+- Stores data in the same `data/raw/` hierarchy (HTML under `html/`, assets under `files/`, metadata appended to `metadata.tsv`).
+- Reads the same config file (start URL, allowed domains, extension whitelist, crawl limits, delay, etc.).
+- Only handles downloading; continue to use the Python scripts (`build_graph.py`, etc.) to clean content and build the graph once the C++ crawler finishes.
+
+This downloader replaces the old Python crawler. After it finishes, run the Python scripts (`link_map.py`, `build_graph.py`, etc.) to inspect links, clean content, and build the graph.
+
+## Inspect link structure quickly
+
+If you want a lightweight view of the site graph (unique URLs + edges) before downloading everything, run:
+
+```bash
+python scripts/link_map.py
+```
+
+This scanner performs a BFS but only collects link structure, writing stats and a simple edge list to `data/link_map.json` (configurable). Use it to gauge how many unique URLs the crawler will eventually hit.
 
 ## Clean content & build the graph
 
@@ -150,7 +171,7 @@ What this step does:
 
 ## Configuration file
 
-- `config/pipeline.json` controls both scripts (seed URL, allowed domains, throttling, output directories, extension whitelist, snippet length, etc.).
+- `config/pipeline.json` controls all ingestion utilities (seed URL, allowed domains, throttling, output directories, extension whitelist, snippet length, `crawler_threads`, link-map output path, etc.).
 - Each script automatically reads this file; adjust values there instead of passing command-line flags.
 - To use a different config file temporarily, set `PIPELINE_CONFIG=/path/to/custom.json` before running the scripts.
 

@@ -39,5 +39,8 @@
     ".mp4"
   ],
   "root_url": "https://www.bgsu.edu",
-  "graph_snippet_chars": 600
+  "graph_snippet_chars": 600,
+  "link_map_output": "data/link_map.json",
+  "link_map_max_pages": -1,
+  "crawler_threads": 8
 }
