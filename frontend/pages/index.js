@@ -39,10 +39,11 @@ const pipelineTiles = [
   { title: "Embeddings", status: "Queued", icon: "⚙️", badge: "ETA 5m" },
 ];
 
-export default function Home() {
+export default function Home({ theme, toggleTheme }) {
   const [query, setQuery] = useState("best scholarships for cs majors");
   const [results, setResults] = useState(mockResults);
   const [loading, setLoading] = useState(false);
+  const isDarkMode = theme === "falconDark";
 
   const handleSearch = async (event) => {
     event.preventDefault();
@@ -56,14 +57,24 @@ export default function Home() {
       <header className="max-w-6xl mx-auto px-6 pt-16">
         <div className="flex flex-col gap-10 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-6 max-w-3xl">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-[#FF6A13] text-white font-black text-lg flex items-center justify-center shadow-lg">
-                BGSU
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-[#FF6A13] text-white font-black text-lg flex items-center justify-center shadow-lg">
+                  BGSU
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.4em] text-base-content/60">FalconGraph Search</p>
+                  <p className="text-2xl font-bold text-base-content">Campus knowledge at a glance</p>
+                </div>
               </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.4em] text-base-content/60">FalconGraph Search</p>
-                <p className="text-2xl font-bold text-base-content">Campus knowledge at a glance</p>
-              </div>
+              <button
+                type="button"
+                className="btn btn-sm btn-outline border-base-300 hover:border-primary/60 transition-all duration-200"
+                onClick={toggleTheme}
+                aria-label="Toggle dark mode"
+              >
+                {isDarkMode ? "☀️ Light" : "🌙 Dark"}
+              </button>
             </div>
             <h1 className="text-4xl lg:text-5xl font-black leading-tight tracking-tight">
               Ask a question. See the sources. Trust the answer.
