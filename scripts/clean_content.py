@@ -93,6 +93,23 @@ class ContentCleaner:
             logging.error("No metadata records found at %s", self.settings.metadata_path)
             return
 
+        if self.settings.clean_nodes_path.exists():
+            try:
+                with self.settings.clean_nodes_path.open("r", encoding="utf-8") as f:
+                    existing_nodes = {node["url"].rstrip("/"): node for node in json.load(f)}
+                self.nodes.update(existing_nodes)
+                logging.info("Loaded %s existing cleaned nodes", len(self.nodes))
+            except Exception as exc:
+                logging.warning("Failed to load existing cleaned nodes: %s", exc)
+
+        if self.settings.clean_edges_path.exists():
+            try:
+                with self.settings.clean_edges_path.open("r", encoding="utf-8") as f:
+                    self.edges = json.load(f)
+                logging.info("Loaded %s existing cleaned edges", len(self.edges))
+            except Exception as exc:
+                logging.warning("Failed to load existing cleaned edges: %s", exc)
+
         total = len(records)
         logging.info("Cleaning %s records (serial)", total)
         for idx, record in enumerate(records, start=1):
@@ -101,9 +118,6 @@ class ContentCleaner:
             self.edges.extend(edges)
             if idx % 50 == 0:
                 logging.info("Processing [%s/%s]: %s", idx, total, url)
-            if idx % self.settings.checkpoint_interval == 0:
-                logging.info("Processed [%s/%s]... writing checkpoint", idx, total)
-                self._write_outputs(partial=True)
 
         self._write_outputs()
 
