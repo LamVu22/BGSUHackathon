@@ -72,7 +72,7 @@ export default function Home() {
               {highlightStats.map((item) => (
                 <div
                   key={item.label}
-                  className="rounded-2xl bg-base-100/70 backdrop-blur border border-base-300 p-4 shadow-sm"
+                  className="rounded-2xl bg-base-100/70 backdrop-blur border border-base-300 p-4 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl"
                 >
                   <p className="text-xs uppercase tracking-widest text-base-content/60">{item.label}</p>
                   <p className={`text-2xl font-semibold ${item.accent}`}>{item.value}</p>
@@ -135,7 +135,10 @@ export default function Home() {
         <aside className="space-y-6">
           <div className="grid gap-4">
             {pipelineTiles.map((tile) => (
-              <div key={tile.title} className="card bg-base-100 border border-base-200 shadow-md">
+              <div
+                key={tile.title}
+                className="card bg-base-100 border border-base-200 shadow-md transition-all duration-200 hover:-translate-y-1 hover:border-primary/50 hover:shadow-xl"
+              >
                 <div className="card-body">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -151,7 +154,7 @@ export default function Home() {
               </div>
             ))}
           </div>
-          <div className="card bg-gradient-to-br from-primary to-accent text-primary-content shadow-xl border border-primary/40">
+          <div className="card bg-gradient-to-br from-primary to-accent text-primary-content shadow-xl border border-primary/40 transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl">
             <div className="card-body space-y-4">
               <div>
                 <p className="text-xs uppercase tracking-[0.4em]">Need richer data?</p>
@@ -160,7 +163,9 @@ export default function Home() {
               <p className="text-sm opacity-80">
                 Point to a new seed in <code>config/pipeline.json</code> and keep this dashboard open to watch it land.
               </p>
-              <button className="btn btn-sm bg-base-100 text-primary border-none hover:bg-base-200">Open config</button>
+              <button className="btn btn-sm bg-base-100 text-primary border-none hover:bg-base-200 hover:-translate-y-0.5 transition-all duration-200">
+                Open config
+              </button>
             </div>
           </div>
         </aside>
