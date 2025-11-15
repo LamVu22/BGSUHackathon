@@ -93,6 +93,7 @@ Notes about Node vs Python environments
 - Frontend dependencies live in `frontend/package.json` and are installed with npm/pnpm/yarn (not pip).
 - Add `frontend/node_modules/` to `.gitignore` (we already ignore general `node_modules/`).
 - If teammates need a fast frontend setup, commit `package-lock.json` or `pnpm-lock.yaml` for reproducible installs.
+- To enable Gemini RAG, copy `frontend/.env.local.example` to `frontend/.env.local` and add `GEMINI_API_KEY=...` (and optionally `GEMINI_MODEL=gemini-1.5-flash-latest`). The `/api/search` route crawls bgsu.edu, calls Gemini, and the search UI invokes that route for every query.
 
 ## Quick start (backend)
 
@@ -156,8 +157,19 @@ python scripts/build_graph.py
 
 What this step does:
 - Consumes `data/processed/clean_nodes.json` + `clean_edges.json`
-- Builds the directed graph (nodes + edges) and computes word counts, in/out degree, PageRank, betweenness, depth-from-root, internal/external outgoing link counts, and per-edge hop distances
-- Saves JSON outputs to `data/processed/nodes.json` and `data/processed/edges.json`
+- Rebuilds the directed graph (adds any missing nodes referenced by edges) and saves the normalized `nodes.json` / `edges.json` outputs without computing expensive metrics (PageRank, betweenness, etc.). Use these files as the source of truth for downstream indexing or vector search.
+
+## Create local embeddings (optional)
+
+To index the graph for retrieval, install embedding + FAISS dependencies and run:
+
+```bash
+source ./bg-hack-env/bin/activate
+pip install sentence-transformers faiss-cpu
+python scripts/embed_nodes.py
+```
+
+This script reads `data/processed/nodes.json`, encodes each node with `all-MiniLM-L6-v2`, and writes `data/processed/faiss.index` plus `node_mapping.json`, so you can serve vector search locally.
 
 ## Configuration file
 
@@ -180,3 +192,15 @@ We replaced the earlier full environment snapshot with a minimal `requirements.t
 - Scaffold the frontend in `frontend/` and wire it to the backend for queries and graph visualization.
 
 See the project plan in the repository issues/todo for sprint-by-sprint tasks.
+
+## Create local embeddings (optional)
+
+To index the graph for retrieval, install embedding + FAISS dependencies and run:
+
+```bash
+source ./bg-hack-env/bin/activate
+pip install sentence-transformers faiss-cpu
+python scripts/embed_nodes.py --device cpu --batch-size 128
+```
+
+This script reads `data/processed/nodes.json`, encodes each node with `all-MiniLM-L6-v2`, and writes `data/processed/faiss.index` plus `node_mapping.json`, so you can serve vector search locally.

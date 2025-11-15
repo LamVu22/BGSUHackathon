@@ -88,8 +88,10 @@ class GraphBuilder:
             )
             logging.error("Run scripts/clean_content.py first.")
             return False
+        logging.info("Loading cleaned nodes from %s", self.settings.clean_nodes_path)
         with self.settings.clean_nodes_path.open("r", encoding="utf-8") as f:
             nodes_list = json.load(f)
+        logging.info("Loading cleaned edges from %s", self.settings.clean_edges_path)
         with self.settings.clean_edges_path.open("r", encoding="utf-8") as f:
             self.edges = json.load(f)
 
@@ -99,9 +101,10 @@ class GraphBuilder:
         return True
 
     def _build_graph(self) -> None:
+        logging.info("Building graph with %s nodes", len(self.nodes))
         for url, data in self.nodes.items():
             self.graph.add_node(url, **data)
-
+        logging.info("Adding %s edges to graph", len(self.edges))
         for edge in self.edges:
             source = edge.get("source", "").rstrip("/")
             target = edge.get("target", "").rstrip("/")
@@ -124,58 +127,8 @@ class GraphBuilder:
             self.graph.add_edge(source, target, **{k: v for k, v in edge.items() if k not in {"source", "target"}})
 
     def _compute_metrics(self) -> None:
-        if self.graph.number_of_nodes() == 0:
-            return
-
-        pagerank = nx.pagerank(self.graph, alpha=0.85, max_iter=200)
-        betweenness = nx.betweenness_centrality(self.graph, normalized=True)
-        depth = {}
-        root = self.settings.root_url.rstrip("/")
-        if root in self.graph:
-            depth = nx.single_source_shortest_path_length(self.graph, root)
-
-        parents_map: Dict[str, set] = {node: set() for node in self.graph.nodes}
-        children_map: Dict[str, set] = {node: set() for node in self.graph.nodes}
-        internal_out = {node: 0 for node in self.graph.nodes}
-        external_out = {node: 0 for node in self.graph.nodes}
-
-        for source, target in self.graph.edges:
-            parents_map[target].add(source)
-            children_map[source].add(target)
-            source_domain = urlparse(source).netloc
-            target_domain = urlparse(target).netloc
-            if source_domain == target_domain:
-                internal_out[source] += 1
-            else:
-                external_out[source] += 1
-
-        for edge in self.edges:
-            source = edge.get("source", "").rstrip("/")
-            target = edge.get("target", "").rstrip("/")
-            source_depth = depth.get(source)
-            target_depth = depth.get(target)
-            edge["source_depth"] = source_depth
-            edge["target_depth"] = target_depth
-            if source_depth is not None and target_depth is not None:
-                edge["hop_distance"] = target_depth - source_depth
-            else:
-                edge["hop_distance"] = None
-
-        for url, data in self.nodes.items():
-            data.setdefault("metrics", {})
-            data["metrics"].update(
-                {
-                    "in_degree": self.graph.in_degree(url),
-                    "out_degree": self.graph.out_degree(url),
-                    "pagerank": pagerank.get(url, 0.0),
-                    "betweenness": betweenness.get(url, 0.0),
-                    "depth_from_root": depth.get(url),
-                    "internal_outgoing": internal_out.get(url, 0),
-                    "external_outgoing": external_out.get(url, 0),
-                }
-            )
-            data["parents"] = sorted(parents_map.get(url, []))[:20]
-            data["children"] = sorted(children_map.get(url, []))[:20]
+        logging.info("Metric computation disabled (skipping slow analytics)")
+        # Intentionally left blank – we no longer compute PageRank/betweenness/etc.
 
     def _write_outputs(self) -> None:
         self.settings.processed_output.mkdir(parents=True, exist_ok=True)
