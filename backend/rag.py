@@ -4,6 +4,7 @@ import asyncio
 import logging
 from dataclasses import dataclass
 import re
+import time
 from typing import Any, Dict, List, Sequence
 from urllib.parse import urlparse
 
@@ -180,6 +181,7 @@ class RAGPipeline:
         self.openai = AsyncOpenAI(api_key=self.settings.openai_api_key) if self.settings.openai_api_key else None
 
     async def run(self, question: str, limit: int | None = None) -> Dict[str, Any]:
+        start_time = time.perf_counter()
         limit = limit or self.settings.max_web_results
         search_results = await self.search_client.search(question, limit)
         pages = await self.scraper.fetch_bulk(search_results)
@@ -190,6 +192,12 @@ class RAGPipeline:
                 "citations": [],
                 "chunks": [],
                 "search_results": [result.__dict__ for result in search_results],
+                "stats": {
+                    "sources": len(pages),
+                    "chunks": 0,
+                    "latency": round(time.perf_counter() - start_time, 2),
+                    "web_hits": len(search_results),
+                },
             }
         scores, ranked_chunks = await self._rank_chunks(question, chunks)
         response_text = await self._summarize(question, ranked_chunks)
@@ -210,6 +218,12 @@ class RAGPipeline:
             "citations": citations,
             "chunks": [chunk.__dict__ for chunk in ranked_chunks],
             "search_results": [result.__dict__ for result in search_results],
+            "stats": {
+                "sources": len(pages),
+                "chunks": len(ranked_chunks),
+                "latency": round(time.perf_counter() - start_time, 2),
+                "web_hits": len(search_results),
+            },
         }
 
     def _build_chunks(self, documents: Sequence[Dict[str, str]]) -> List[DocumentChunk]:

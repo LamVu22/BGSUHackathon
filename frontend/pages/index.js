@@ -10,10 +10,10 @@ const headlineSegments = [
   "Trust the answer.",
 ];
 
-const highlightStats = [
-  { label: "Pages", value: 12400, suffix: "", accent: "text-primary" },
-  { label: "PDF chunks", value: 3200, suffix: "", accent: "text-secondary" },
-  { label: "Latency", value: 2.3, suffix: "s", accent: "text-accent", decimals: 1 },
+const BASE_STATS = [
+  { key: "sources", label: "Sources scanned", suffix: "", accent: "text-primary" },
+  { key: "chunks", label: "Context chunks", suffix: "", accent: "text-secondary" },
+  { key: "latency", label: "Latency", suffix: "s", accent: "text-accent", decimals: 2 },
 ];
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -38,9 +38,7 @@ export default function Home({ theme, toggleTheme }) {
   const [mounted, setMounted] = useState(false);
   const [segmentIndex, setSegmentIndex] = useState(0);
   const [typedHeadline, setTypedHeadline] = useState("");
-  const [statValues, setStatValues] = useState(
-    highlightStats.map(() => 0)
-  );
+  const [stats, setStats] = useState(BASE_STATS.map((stat) => ({ ...stat, value: 0 })));
   const [answer, setAnswer] = useState("");
   const [searchMeta, setSearchMeta] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
@@ -51,29 +49,6 @@ export default function Home({ theme, toggleTheme }) {
 
   useEffect(() => {
     setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    const duration = 1200;
-    const frames = 60;
-    const increments = highlightStats.map((stat) => stat.value / frames);
-    let currentFrame = 0;
-
-    const interval = setInterval(() => {
-      currentFrame += 1;
-      setStatValues((prev) =>
-        prev.map((value, idx) => {
-          const next = value + increments[idx];
-          return currentFrame >= frames ? highlightStats[idx].value : next;
-        })
-      );
-
-      if (currentFrame >= frames) {
-        clearInterval(interval);
-      }
-    }, duration / frames);
-
-    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -142,11 +117,19 @@ export default function Home({ theme, toggleTheme }) {
       setAnswer(data.answer || "");
       setResults(formattedCitations);
       setSearchMeta(data.search_results || []);
+      const payloadStats = data.stats || {};
+      setStats(
+        BASE_STATS.map((stat) => ({
+          ...stat,
+          value: payloadStats[stat.key] ?? 0,
+        }))
+      );
     } catch (error) {
       setErrorMessage(error.message || "Search failed.");
       setAnswer("");
       setResults([]);
       setSearchMeta([]);
+      setStats(BASE_STATS.map((stat) => ({ ...stat, value: 0 })));
     } finally {
       setLoading(false);
     }
@@ -158,16 +141,14 @@ export default function Home({ theme, toggleTheme }) {
   };
 
   const formatStatValue = (stat, value = 0) => {
-    if (stat.label === "Latency") {
-      const decimals = stat.decimals ?? 0;
-      return `${value.toFixed(decimals)}${stat.suffix ?? ""}`;
+    const decimals = stat.decimals ?? 0;
+    if (stat.key === "latency") {
+      return `${Number(value || 0).toFixed(decimals)}${stat.suffix ?? ""}`;
     }
-
     if (value >= 1000) {
       return `${(value / 1000).toFixed(1)}k${stat.suffix ?? ""}`;
     }
-
-    return `${Math.round(value).toLocaleString()}${stat.suffix ?? ""}`;
+    return `${Math.round(value || 0).toLocaleString()}${stat.suffix ?? ""}`;
   };
 
   return (
@@ -199,15 +180,13 @@ export default function Home({ theme, toggleTheme }) {
               <span className="ml-1 border-r-2 border-primary animate-pulse" />
             </h1>
             <div className="grid grid-cols-3 gap-3">
-              {highlightStats.map((item, index) => (
+              {stats.map((item) => (
                 <div
                   key={item.label}
                   className="rounded-xl bg-base-100/70 backdrop-blur border border-base-300 px-3 py-2 shadow-sm transition-all duration-200"
                 >
                   <p className="text-[10px] uppercase tracking-[0.3em] text-base-content/60">{item.label}</p>
-                  <p className={`text-xl font-semibold ${item.accent}`}>
-                    {formatStatValue(item, statValues[index])}
-                  </p>
+                  <p className={`text-xl font-semibold ${item.accent}`}>{formatStatValue(item, item.value)}</p>
                   <p className="text-[10px] text-base-content/60">Live telemetry</p>
                 </div>
               ))}
