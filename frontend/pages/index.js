@@ -31,6 +31,42 @@ const SEARCH_MODES = [
   { value: "local", label: "Local search" },
 ];
 
+const buildGraphFromResults = (results = [], label = "Query") => {
+  const width = 300;
+  const height = 220;
+  const centerX = width / 2;
+  const centerY = height / 2;
+  const radius = Math.min(centerX, centerY) - 40;
+  const nodes = [
+    {
+      id: "query",
+      label,
+      level: 1,
+      x: centerX,
+      y: centerY,
+    },
+  ];
+  const edges = [];
+  const limited = results.slice(0, 6);
+  limited.forEach((result, index) => {
+    const angle = (index / Math.max(limited.length, 1)) * Math.PI * 2 - Math.PI / 2;
+    const nodeId = `result-${index}`;
+    nodes.push({
+      id: nodeId,
+      label: result.title || `Result ${index + 1}`,
+      level: 2,
+      x: centerX + Math.cos(angle) * radius,
+      y: centerY + Math.sin(angle) * (radius * 0.7),
+      source: result.domain || result.type || result.id || `result-${index}`,
+    });
+    edges.push(["query", nodeId]);
+    if (index > 0) {
+      edges.push([`result-${index - 1}`, nodeId]);
+    }
+  });
+  return { nodes, edges };
+};
+
 export default function Home({ theme, toggleTheme }) {
   const [query, setQuery] = useState("best scholarships for cs majors");
   const [results, setResults] = useState([]);
@@ -118,7 +154,11 @@ export default function Home({ theme, toggleTheme }) {
       setAnswer(data.answer || "");
       setResults(formattedCitations);
       setSearchMeta(data.search_results || []);
-      setGraphContext(data.graph_context || null);
+      const derivedGraph =
+        data.graph_context && Array.isArray(data.graph_context.nodes) && data.graph_context.nodes.length
+          ? data.graph_context
+          : buildGraphFromResults(formattedCitations, trimmedQuery);
+      setGraphContext(derivedGraph);
       const payloadStats = data.stats || {};
       setStats(
         BASE_STATS.map((stat) => ({
