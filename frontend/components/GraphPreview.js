@@ -27,7 +27,7 @@ const COLOR_PALETTE = ["#f26522", "#3aafa9", "#fbbf24", "#60a5fa", "#a78bfa", "#
 
 const VARIANT_CONFIG = {
   inline: { width: 300, height: 220, scale: 0.85, camera: 320 },
-  modal: { width: 560, height: 340, scale: 1.15, camera: 460 },
+  modal: { width: 720, height: 420, scale: 1.25, camera: 560 },
 };
 
 export default function GraphPreview({ theme = "falcon", nodes = DEFAULT_NODES, edges = DEFAULT_EDGES, graphContext }) {
@@ -52,7 +52,7 @@ export default function GraphPreview({ theme = "falcon", nodes = DEFAULT_NODES, 
           }
         }}
       >
-        <div className="modal-box w-11/12 max-w-4xl bg-base-100 text-base-content">
+        <div className="modal-box w-11/12 max-w-5xl bg-base-100 text-base-content">
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-xs uppercase tracking-[0.35em] text-secondary">Graph context</p>
@@ -63,7 +63,7 @@ export default function GraphPreview({ theme = "falcon", nodes = DEFAULT_NODES, 
             </button>
           </div>
           {expanded && (
-            <div className="border border-base-300 rounded-2xl p-5 bg-base-200/40">
+            <div className="border border-base-300 rounded-2xl p-6 bg-base-200/40">
               <GraphScene
                 nodes={safeNodes}
                 edges={safeEdges}
@@ -125,7 +125,7 @@ function GraphScene({ nodes, edges, rotation, theme, variant, pointerHandlers, c
   return (
     <svg
       viewBox={`0 0 ${config.width} ${config.height}`}
-      className={`w-full ${variant === "modal" ? "h-72" : "h-48"} text-base-content/50 select-none touch-none cursor-grab active:cursor-grabbing`}
+      className={`w-full ${variant === "modal" ? "h-[28rem]" : "h-48"} text-base-content/50 select-none touch-none cursor-grab active:cursor-grabbing`}
       {...pointerHandlers}
     >
       <defs>
